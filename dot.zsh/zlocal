@@ -1,0 +1,66 @@
+alias cl='clear'
+alias cls=cl
+alias curl='noglob curl'
+alias h="host "
+alias hup="killall -HUP "
+alias ks=ls
+alias man='nocorrect man'
+alias mpg123="mpg123 -v "
+alias ping='ping -c 4 '
+alias q="exit"
+alias sc='screen -D -R'
+alias sz='sudo zsh'
+alias tailf="tail -f "
+alias tailn="tail -0 -f "
+alias vf=cd
+alias wc-l="wc -l"
+alias xs=cd
+
+case `uname` in
+        FreeBSD)
+        Darwin)
+            alias ee=vim
+            alias fecth='noglob fetch'
+            alias fecth='noglob fetch'
+            alias fetch='noglob fetch'
+            alias l1="ls -GF1"
+            alias la="ls -GFA"
+            alias ll="ls -lhGFo"
+            alias lla="ls -lhGFoA"
+            alias ls-l="ls -lhGFo"
+            alias ls="ls -GF"
+            alias sl=ls
+            alias wget="wget --no-check-certificate"
+            export LSCOLORS="ExFxcxdxbxEgababagacad"
+            export TOP="-s1 -S -o cpu"
+            export TIMEFMT="R: %E U: %U S: %S %%: %P Cmd: %J"
+            export PAGER=/usr/bin/less
+        ;;
+        OpenBSD)
+            alias killall=pkill
+        ;;
+        Linux)
+            alias ee=vi
+        ;;
+        **)
+        ;;
+esac
+
+PS1=$'%{\e[0;40;36m%}%n%{\e[1;40;37m%}@%{\e[1;40;34m%}%m%{\e[1;40;37m%}>%{\e[0m%} '
+RPS1=$'%{\e[1;37m%}< %{\e[1;32m%}%~ %{\e[1;37m%}>%{\e[0m%}'
+bindkey '^K' kill-region
+bindkey '^A' beginning-of-line
+bindkey '^E' end-of-line
+bindkey '^W' backward-delete-word
+bindkey '^L' clear-screen
+bindkey '\e[3~' delete-char
+bindkey '^[[2~' list-choices
+bindkey '\e[1~' beginning-of-line
+bindkey '\e[4~' end-of-line
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[[A' history-beginning-search-backward
+bindkey '^[[B' history-beginning-search-forward
+bindkey '^[[5~' history-search-backward
+bindkey '^[[6~' history-search-forward
+

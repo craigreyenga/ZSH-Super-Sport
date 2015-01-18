@@ -1,0 +1,37 @@
+compctl -u rmuser
+
+compctl -g '/dev/ttyv*' watch
+
+chflags=(
+    arch
+    opaque
+    nodump
+    sappnd
+    schg
+    sunlnk
+    uappnd
+    uchg
+    uunlnk
+    archived
+    sappend
+    schange
+    simmutable
+    uappend
+    uchange
+    noopaque
+    dump
+    nosappnd
+    noschg
+    nosunlnk
+    nouappnd
+    nouchg
+    nouunlnk
+    noarchived
+    nosappend
+    noschange
+    nosimmutable
+    nouappend
+    nouchange
+    )
+compctl -f -k chflags chflags
+

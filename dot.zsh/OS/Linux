@@ -1,0 +1,9 @@
+alias ls='/bin/ls -F --color'
+
+case $UID in
+        0)
+        alias ls='/bin/ls -FA --color'
+        ;; 
+        **)
+        ;;
+esac

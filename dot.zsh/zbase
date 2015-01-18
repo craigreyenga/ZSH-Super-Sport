@@ -1,0 +1,373 @@
+# Command aliases.
+alias ls='ls -F'
+alias mv='nocorrect mv'
+alias cd='nocorrect cd'
+alias cp='nocorrect cp'
+alias mkdir='nocorrect mkdir'
+alias man='nocorrect man'
+alias gcc='nocorrect gcc'
+
+# Typo aliases.
+alias sl='ls'
+alias cdd='cd'
+alias mmv='mv'
+alias Ls=/bin/ls
+
+# Completion for zsh
+bindkey -e
+zle -C complete complete-word complete-files
+bindkey '^X\t' complete
+
+complete-files () { compadd - * }
+
+# Set up command completions
+compctl -A shift
+compctl -a {,un}alias
+#compctl -/ {c,push,pop}d
+compctl -g '*(-/)' + -g '.*(/)' cd chdir dirs pushd popd rmdir dircmp
+compctl -c exec
+compctl -c man
+compctl -caF type whence which where
+compctl -c -x 'C[-1,-*k]' -A - 'C[-1,-*K]' -F -- compctl
+compctl -c unhash
+compctl -x 'w[1,-d] p[2]' -n - 'w[1,-d] p[3]' -g '*(-/)' - \
+    'p[1]' -c - 'p[2]' -g '*(-x)' -- hash
+compctl -x 'C[-1,-*e]' -c - 'C[-1,-[ARWI]##]' -f -- fc
+compctl -x 'p[1]' - 'p[2,-1]' -l '' -- sched
+compctl -x 'C[-1,[+-]o]' -o - 'c[-1,-A]' -A -- set
+compctl -F functions unfunction
+compctl -o {,un}setopt
+compctl -E {,un}setenv
+compctl -E printenv
+compctl -b bindkey
+compctl -b -x 'w[1,-N] p[3]' -F -- zle
+compctl -z -P '%' bg
+compctl -j -P '%' fg jobs disown
+compctl -j kill
+compctl -j -P '%' + -s '`ps -ax | tail +2 | cut -c1-5`' wait
+compctl -v getln getopts read unset vared
+compctl -v -S '=' -q declare export integer local readonly typeset
+compctl -eB -x 'p[1] s[-]' -k '(a f m r)' - \
+    'C[1,-*a*]' -ea - 'C[1,-*f*]' -eF - 'C[-1,-*r*]' -ew -- disable
+compctl -dB -x 'p[1] s[-]' -k '(a f m r)' - \
+    'C[1,-*a*]' -da - 'C[1,-*f*]' -dF - 'C[-1,-*r*]' -dw -- enable
+compctl -k "(`limit | cut -d' ' -f1`)" limit unlimit
+compctl -l '' -x 'p[1]' -f -- . source
+compctl -s '${^module_path}/*(N:t:r)' -x \
+    'W[1,-*(a*u|u*a)*],W[1,-*a*]p[3,-1]' -B - \
+    'W[1,-*u*]' -s '$(zmodload)' -- zmodload
+compctl -s '$(setopt 2>/dev/null)' + -o + -x 's[no]' -o -- unsetopt
+compctl -s '$(unsetopt 2>/dev/null)' + -o + -x 's[no]' -o -- setopt
+compctl -s '${^fpath}/*(N:t)' autoload
+
+# Anything after nohup is a command by itself with its own completion
+compctl -l '' nohup noglob exec nice eval - time rusage
+compctl -l '' -x 'p[1]' -eB -- builtin
+compctl -l '' -x 'p[1]' -em -- command
+compctl -x 'p[1]' -c - 'p[2,-1]' -k signals -- trap
+
+# Autocomplete for current dir on filetypes
+compctl -g '*.(ps|eps)' + -g '*(-/)' gv
+compctl -g '*.Z *.gz *.tgz' + -g '*' zcat zless zgrep zcmp gunzip gzip
+compctl -g '(#i)*.bz2' + -g '*' bzcat bzip2
+compctl -g '(#i)*.tar.*' '(#i)*.tar' + -g '*(-/)' tar
+compctl -g '(#i)*.zip' + -g '*(-/)' unzip zip
+compctl -g '(#i)*.mp3' + -g '*(-/)' mpg123 xmms
+compctl -g '(#i)*.ogg' + -g '*(-/)' ogg123 xmms
+compctl -g '(#i)*01.rar' + -g '(#i)*.rar' + -g '*(-/)' unrar
+compctl -g '*(-/) *.pl *.PL *.cgi *.pm *.PM *.t *.xpl' + -g '^*.pl' perl miniperl
+compctl -g '*(-/) *.pl *.PL *.pm *.PM *.pod' -K _perl_inc perldoc pod
+compctl -g '*(-/) *.rb' ruby
+compctl -g '*(-/) *.py *.pyc' python
+compctl -g '*(-/) *.c' lint
+
+# autocomplete hosts
+# 1) Default router (handy)
+# 2) This host (almost handy)
+hosts=(
+`netstat -rn | awk '/default/ {print $2}'`
+`hostname`
+`/sbin/ifconfig -a | grep 'inet ' | awk '{print $2}'`
+)
+compctl -k hosts telnet scp ssh sftp ftp ping
+
+# Completions for misc commands
+
+# dd
+compctl -Q -S '' -k '( if= of= bs= skip= count= )' \
+    -x 'S[(if|of)=]' -f \
+    -  's[bs=]' -k '( 256 512 1024 2048 4096 8192 16384 32768 65535 1M 16M )' \
+    -- dd
+
+# screen (which you have installed, of course)
+listscreens () {
+    reply=(`screen -ls | grep 'tached' | sed -e 's/    //' | sed -e 's/    .*//'`)
+}
+compctl -K listscreens screen
+
+#!# mount
+mounttab () { reply=(`egrep "^/.*" /etc/fstab | awk '{print $1}'`) }
+compctl -K mounttab mount
+
+#!# umount
+umounttab () { reply=(`mount | cut -d' ' -f3`) }
+compctl -K umounttab umount
+
+#!# ssh slogin sftp scp
+remote_files () {
+    local a
+    read -cA a
+    reply=(`ssh ${a[-1]%%:*} "echo ${a[-1]#*:]*/(/N) ${a[-1]#*:}*(.N)"`)
+}
+sshhosts () {
+    reply=(`cut -d' ' -f1 ~/.ssh/known_hosts | cut -d, -f1`)
+}
+compctl -K sshhosts -k hosts -x 'c[-1,-1]' -u -- ssh slogin sftp
+compctl \
+    -k sshhosts -S ':' \
+    -g '*(-/) *' -S ' ' \
+    -u \
+    -x 'n[-1,@]' -K sshhosts -S ':' \
+    - 's[-]' -k '(a A q Q p r v B C L S o P c i)' \
+    - 'c[-1,-S]' -X '' -f \
+    - 'c[-1,-l]' -u \
+    - 'c[-1,-o]' -X '' \
+    - 'c[-1,-P]' -X '' \
+    - 'c[-1,-c]' -X '' -k '(idea blowfish des 3des arcfour tss none)' \
+    - 'c[-1,-i]' -X '' -f \
+    - 'n[-1,:]' -S '' -K remote_files \
+    - 'C[0,[./]*] ' -f  \
+    -g '*(-/) *' -S ' ' -- scp
+
+#!# man whatis apropos
+man_glob () {
+    local a
+    read -cA a
+    case $a[2] in
+        1|2|3|4|5|6|7|8|9)
+            reply=(${^manpath}/man$a[2]/$1*$2(N:t:fr))
+            ;;
+        *)
+            reply=(${^manpath}/man*/$1*$2(N:t:fr))
+            ;;
+    esac
+}
+compctl -K man_glob man whatis apropos
+
+#!# make
+makeentry () {
+    local a
+    local mfile
+    read -cA a
+    mfile=(GNUmakefile makefile Makefile)
+    while [ ! -z $a[0] ]; do
+        shift a
+        case $a[0] in
+            -f)    shift a;
+                mfile=$(a[0])
+                ;;
+        esac
+    done
+    while [ ! -z "$mfile[0]" ]; do
+        if [ -f $mfile[0] ]; then
+            reply=(`egrep '^[^#. ][^=       ]*:' $mfile[0] | cut -d: -f1`)
+            break
+        else
+            shift mfile
+        fi
+    done
+}
+compctl -K makeentry -x 'c[-1,-f]' -f -- make
+
+#!# kill
+compctl -j -P '%' + -s '`ps ax | tail +2 | cut -c1-5`' + \
+    -x 's[-] p[1]' -k "($signals[1,-3])" -- kill
+
+#!# chgrp
+listgroups=(`egrep '^#.*' /etc/group | cut -d: -f1`)
+compctl -f -x 'p[1] n[-1,:], p[2] C[-1,-*] n[-1,:]' -k listgroups \
+    - 'p[1], p[2] C[-1,-*]' -u -- chgrp
+
+#!# chown
+compctl -f -x 'p[1] n[-1,:], p[2] C[-1,-*] n[-1,:]' -k listgroups \
+    - 'p[1], p[2] C[-1,-*]' -u -S ':' -- chown
+
+#!# su
+compctl -u -x 'w[2,-c] p[3,-1]' -l '' -- su
+
+#!# openssl
+compctl -k '(asn1parse ca ciphers crl crl2pkcs7 dgst dh dhparam dsa dsaparam \
+    enc errstr gendh gendsa genrsa nseq passwd pkcs12 pkcs7 pkcs8 \
+    rand req rsa rsautl s_client s_server s_time sess_id smime speed \
+    spkac verify version x509)' openssl
+
+#!# host
+compctl -K sshhosts -x 's[-t]' \
+    -k '(A AAAA CNAME HINFO MINFO MX NS PTR SOA TXT UINFO WKS)' \
+    -- host
+
+#!# nslookup
+compctl -K sshhosts -x 's[-type=]' \
+    -k '(A AAAA CNAME HINFO MINFO MX NS PTR SOA TXT UINFO WKS)' \
+    -- nslookup
+
+#!# Apache
+compctl -k '(configtest fullstatus help graceful restart start startssl status stop)' apachectl
+
+#!# ISC BIND
+compctl -k '(reload refresh stats querylog dumpdb stop halt)' ndc rndc
+
+#!# MySQL
+compctl -x 'c[-1,-u]' -u -- mysql mysql4
+compctl -k '(create drop extended-status flush-hosts flush-logs flush-tables \
+    flush-privileges kill password ping processlist reload refresh \
+    shutdown status variables version)' mysqladmin myadmin mysqladmin4
+
+#!# id finger passwd
+compctl -u id finger passwd
+
+#!# sudo
+compctl -m sudo
+
+# zsh Environment
+# You can override environment variables in ${ZSHROOT}/hostspecific/zenvironment
+
+fpath=(
+    $zdotdir/{.[z]sh/*.zwc,{.[z]sh,[l]ib/zsh}/{functions,scripts}}(N)
+    $fpath
+    /usr/share/zsh/${ZSH_VERSION}/[F]unctions(N)
+)
+
+for dirname in $fpath; do
+    fns=( $dirname/*-*-(N.x:t) )
+    (( $#fns )) && autoload "$fns[@]"
+done
+typeset -gU fpath
+
+freload () {
+    while (( $# )); do
+        unfunction $1;
+        autoload -U $1;
+        shift;
+    done
+}
+
+# History
+HISTFILE=${HOME}/.zhistory
+HISTSIZE=5000
+SAVEHIST=5000
+
+DIRSTACKSIZE=20
+
+# Manual page paths
+manpath=(/usr/man /usr/local/man /usr/share/man /usr/local/share/man)
+export MANPATH
+
+# Set up prompts
+PROMPT='[%B%?%b] %B%n@%M%b:%c%# '; export PROMPT
+RPROMPT='[%*]'; export RPROMPT
+
+# For those times when we may get confused =]
+setenv () {
+    typeset -x "${1}${1:+=}${(@)argv[2,$#]}"
+}
+
+precmd () {
+    case $TERM in
+        xterm*)
+            print -Pn "\e]0;%n@%m:%y <%d> @%T\007"
+        ;;
+    esac
+}
+preexec () {
+    case $TERM in
+        xterm*)
+            foob=($=1)
+            print -Pn "\e]0;<$foob[1]> %n@%m:%y <%d> @%T\007"
+        ;;
+    esac
+}
+
+# Automatically remove duplicates from these arrays
+typeset -U path cdpath fpath manpath
+
+# Keybindings
+bindkey "^@" undefined-key
+bindkey '^A' beginning-of-line
+bindkey "^B" self-insert
+bindkey "^C" undefined-key
+bindkey "^D" list-choices
+bindkey '^E' end-of-line
+bindkey "^H" vi-backward-delete-char
+bindkey "^I" expand-or-complete
+bindkey "^J" accept-line
+bindkey "^K" kill-line
+bindkey "^L" clear-screen
+bindkey "^M" accept-line
+bindkey "^R" redisplay
+bindkey "^U" vi-kill-line
+bindkey "^V" quoted-insert
+bindkey "^W" vi-backward-kill-word
+bindkey "\e" prefix
+bindkey "^?" backward-delete-char
+#bindkey "\e" vi-cmd-mode
+bindkey "\e[A" up-line-or-history
+bindkey "\e[B" down-line-or-history
+bindkey "\e[C" forward-char
+bindkey "\e[D" backward-char
+
+# zsh module loading
+
+zmodload -a zsh/stat stat
+zmodload -a zsh/zpty zpty
+zmodload -a zsh/zprof zprof
+zmodload -ap zsh/mapfile mapfile
+
+setopt              \
+    AUTO_CD         \
+    AUTO_PUSHD      \
+    CDABLE_VARS     \
+    PUSHD_IGNORE_DUPS   \
+    PUSHD_MINUS     \
+    PUSHD_SILENT    \
+    PUSHD_TO_HOME   \
+    AUTO_MENU       \
+    AUTO_REMOVE_SLASH   \
+    BASH_AUTO_LIST  \
+    GLOB_COMPLETE   \
+    LIST_TYPES      \
+    REC_EXACT       \
+    EXTENDED_GLOB   \
+    GLOB_DOTS       \
+    NUMERIC_GLOB_SORT   \
+    APPEND_HISTORY  \
+    HIST_FIND_NO_DUPS   \
+    HIST_IGNORE_DUPS    \
+    HIST_SAVE_NO_DUPS   \
+    HIST_VERIFY     \
+    ALIASES         \
+    CORRECT         \
+    PATH_DIRS       \
+    RC_QUOTES       \
+    AUTO_RESUME     \
+    CHECK_JOBS      \
+    LONG_LIST_JOBS  \
+    NOHUP           \
+    NOTIFY          \
+    PROMPT_SUBST    \
+    NO_CLOBBER      \
+    CORRECTALL      \
+    RECEXACT        \
+    NO_mailwarning
+
+unsetopt            \
+    BG_NICE
+#    autoparamslash
+
+# Misc Stuff
+sleepmin () { sleep $(($1*60)) ; echo '\007\c' ; sleep 60 }
+
+# Read in local overrides
+if [ -f ${ZSHSSROOT_HOSTSPEC}/zoptions ]; then
+    source ${ZSHSSROOT_HOSTSPEC}/zoptions
+fi
