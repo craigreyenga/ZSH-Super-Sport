@@ -17,8 +17,7 @@ alias wc-l="wc -l"
 alias xs=cd
 
 case `uname` in
-        FreeBSD)
-        Darwin)
+        FreeBSD|Darwin)
             alias ee=vim
             alias fecth='noglob fetch'
             alias fecth='noglob fetch'
